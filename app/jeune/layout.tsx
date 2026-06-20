@@ -1,6 +1,6 @@
 'use client';
 
-import { SkinsProvider } from '@/components/SkinsProvider';
+import SkinsProvider from '@/components/SkinsProvider';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
