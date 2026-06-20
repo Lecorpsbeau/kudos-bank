@@ -1,84 +1,37 @@
-'use client';
+export interface User {
+  id: string;
+  username: string;
+  role: 'animateur' | 'jeune';
+  active_skin: string;
+  unlocked_skins: string[];
+}
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Transaction } from '@/types';
+export interface Transaction {
+  id: string;
+  jeune_id: string;
+  amount: number;
+  reason: string;
+  is_privilege: boolean;
+  privilege_status: 'none' | 'pending' | 'granted';
+  created_at: string;
+}
 
-export default function PrivilegeAlerts() {
-  const [alerts, setAlerts] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    loadAlerts();
-    // Souscription temps réel
-    const subscription = supabase
-      .channel('privileges')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'transactions',
-        filter: 'is_privilege=eq.true'
-      }, () => loadAlerts())
-      .subscribe();
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadAlerts = async () => {
-    const { data } = await supabase
-      .from('transactions')
-      .select('*, users!jeune_id(username)')
-      .eq('is_privilege', true)
-      .eq('privilege_status', 'pending')
-      .order('created_at', { ascending: false });
-
-    setAlerts(data || []);
+export interface SkinConfig {
+  name: string;
+  cost: number;
+  type: 'digital';
+  classes: {
+    bg: string;
+    text: string;
+    accent: string;
+    card: string;
+    button: string;
   };
+}
 
-  const handleGrant = async (transactionId: string) => {
-    await supabase
-      .from('transactions')
-      .update({ privilege_status: 'granted' })
-      .eq('id', transactionId);
-
-    loadAlerts();
-  };
-
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-8">🔔 Alertes Privilèges</h1>
-      
-      {alerts.length === 0 ? (
-        <div className="text-center text-gray-400 mt-12">
-          <p className="text-xl">Aucune alerte en attente</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-6"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-semibold text-yellow-300">
-                    {(alert as any).users?.username}
-                  </h3>
-                  <p className="text-gray-300 mt-2">{alert.reason}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {new Date(alert.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleGrant(alert.id)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  Marquer comme accordé
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+export interface Privilege {
+  name: string;
+  cost: number;
+  type: 'irl';
+  description: string;
 }
